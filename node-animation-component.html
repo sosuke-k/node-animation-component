@@ -1,0 +1,240 @@
+<!--
+`node-animation-component` is a component displaying Node Animation with canvas.
+```
+<node-animation-component nodeColor="251,233,231" hoverNodeColor="255,112,67">
+  <h2 behind>NODE ANIMATION COMPONENT</h2>
+  <h1 front>NODE ANIMATION COMPONENT</h1>
+</node-animation-component>
+```
+If you want to know the way to customize, please wait(_ _).
+how to customizing page is under construction.
+@group Canvas Elements
+@element node-animation-component
+@homepage https://github.com/sosuke-k/node-animation-component
+-->
+
+
+<link rel="import" href="../../polymer/polymer.html">
+
+<polymer-element name="node-animation-component" attributes="numNode minDist springAmount nodeColor hoverNodeColor">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+      
+      #container,
+      #canvas,
+      .content {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      #container {
+        position: relative;
+      }
+      
+      #canvas,
+      .content {
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+      
+      #canvas {
+        background: transparent;
+      }
+    </style>
+    <div id="container">
+      <div class="content">
+        <content select="[behind]"></content>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div class="content">
+        <content select="[front]"></content>
+      </div>
+    </div>
+  </template>
+  <script>
+    (function() {
+      Polymer("node-animation-component", {
+
+        /**
+         * The number of nodes.
+         *
+         * @attribute numNode
+         * @type number
+         * @default 100
+         */
+        numNode: 100,
+
+        /**
+         * The minimum of dist.
+         *
+         * @attribute minDist
+         * @type number
+         * @default 60
+         */
+        minDist: 60,
+
+        /**
+         * The amount of spring.
+         *
+         * @attribute springAmount
+         * @type number
+         * @default 0.0002
+         */
+        springAmount: 0.0002,
+
+        /**
+         * The color of nodes.
+         *
+         * @attribute nodeColor
+         * @type string
+         * @default '255,255,255'
+         */
+        nodeColor: '255,255,255',
+
+        /**
+         * The color of nodes when mouse hover.
+         *
+         * @attribute hoverNodeColor
+         * @type string
+         * @default null
+         */
+        hoverNodeColor: null,
+
+        looper: null,
+        context: null,
+        nodes: null,
+        color: null,
+
+        ready: function() {
+          console.log("attached", this.offsetWidth, this.offsetHeight);
+        },
+
+        attached: function() {
+          console.log("attached", this.offsetWidth, this.offsetHeight);
+
+          this.$.canvas.width = this.offsetWidth;
+          this.$.canvas.height = this.offsetHeight;
+          this.context = this.$.canvas.getContext('2d');
+
+          this.init();
+        },
+
+        mouseEnter: function() {
+          this.color = this.hoverNodeColor;
+        },
+        mouseLeave: function() {
+          this.color = this.nodeColor;
+        },
+
+        init: function() {
+          this.color = this.nodeColor;
+          this.setHoverListener();
+          this.createNodes();
+          this.context.lineWidth = 1.5;
+          this.looper = setInterval((function(self) {
+            return function() {
+              self.updateAndDraw();
+            }
+          })(this), 1000 / 31);
+        }, //end initializing function
+
+        setHoverListener: function() {
+          if (this.hoverNodeColor != null) {
+            this.$.container.addEventListener("mouseenter", (function(self) {
+              return function() {
+                self.mouseEnter();
+              }
+            })(this));
+            this.$.container.addEventListener("mouseleave", (function(self) {
+              return function() {
+                self.mouseLeave();
+              }
+            })(this));
+          }
+        }, //end hover listener setting function
+
+        createNodes: function() {
+          this.nodes = [];
+          var W = this.$.canvas.width;
+          var H = this.$.canvas.height;
+          var context = this.context;
+          for (var i = 0; i < this.numNode; i++) {
+            var node = {
+              radius: 1.5,
+              x: Math.random() * W,
+              y: Math.random() * H,
+              vx: Math.random() * 6 - 3,
+              vy: Math.random() * 6 - 3,
+              mass: 1,
+              update: function() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x > W) {
+                  this.x = 0;
+                } else if (this.x < 0) {
+                  this.x = W;
+                }
+                if (this.y > H) {
+                  this.y = 0;
+                } else if (this.y < 0) {
+                  this.y = H;
+                }
+              },
+              draw: function(color) {
+                context.fillStyle = "rgb(" + color + ")";
+                context.beginPath();
+                context.arc(this.x, this.y, this.radius, 0, Math.PI * 2, true);
+                context.closePath();
+                context.fill();
+              }
+            };
+            this.nodes.push(node);
+          }
+        }, //end creating function
+
+        updateAndDraw: function() {
+          // console.log("this", this);
+          this.context.clearRect(0, 0, this.$.canvas.width, this.$.canvas.height);
+          for (i = 0; i < this.numNode; i++) {
+            this.nodes[i].update();
+            this.nodes[i].draw(this.color);
+          }
+          for (i = 0; i < this.numNode - 1; i++) {
+            var node1 = this.nodes[i];
+            for (var j = i + 1; j < this.numNode; j++) {
+              var node2 = this.nodes[j];
+              this.spring(node1, node2);
+            }
+          }
+        }, //end looping function
+
+        spring: function(na, nb) {
+            var dx = nb.x - na.x;
+            var dy = nb.y - na.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < this.minDist) {
+              this.context.beginPath();
+              this.context.strokeStyle = "rgba(" + this.color + "," + (1 - dist / this.minDist) + ")";
+              this.context.moveTo(na.x, na.y);
+              this.context.lineTo(nb.x, nb.y);
+              this.context.stroke();
+              this.context.closePath();
+              var ax = dx * this.springAmount;
+              var ay = dy * this.springAmount;
+              na.vx += ax;
+              na.vy += ay;
+              nb.vx -= ax;
+              nb.vy -= ay;
+            }
+          } //end spring function
+
+      });
+    })();
+  </script>
+</polymer-element>

@@ -1,0 +1,35 @@
+{
+  "name": "node-animation-component",
+  "version": "0.1.0",
+  "authors": [
+    "sosuke-k"
+  ],
+  "description": "The Force Layout of D3",
+  "license": "MIT",
+  "homepage": "https://github.com/sosuke-k/node-animation-component",
+  "keywords": [
+    "Polymer",
+    "web-components",
+    "canvas"
+  ],
+  "main": [
+    "node-animation-component.html"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "coffee",
+    "js",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.5"
+  },
+  "devDependencies": {
+    "polymer": "Polymer/polymer#~0.5.5",
+    "prism-js": "https://github.com/mskrajnowski/prism-js.git#~0.1.1",
+    "core-component-page": "Polymer/core-component-page#~0.5.5"
+  }
+}
